@@ -564,27 +564,81 @@
             </div>
         </div>
     </div>
+<!-- Modal Edit Event -->
+<div id="modal-edit-event" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
+    <div style="background:#fff; margin:10% auto; padding:20px; width:400px; border-radius:8px;">
+        <h3>Edit Event</h3>
+        <form id="form-edit-event">
+            <input type="hidden" id="edit-ev-id">
+            <label>Nama Event:</label><br>
+            <input type="text" id="edit-ev-nama" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Nama Klien:</label><br>
+            <input type="text" id="edit-ev-klien" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Tanggal Event:</label><br>
+            <input type="date" id="edit-ev-tanggal" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Nilai Kontrak (Rp):</label><br>
+            <input type="number" id="edit-ev-kontrak" required style="width:100%; margin-bottom:15px;"><br>
+            <button type="submit" class="btn" style="background:#28a745; color:#fff;">Simpan Perubahan</button>
+            <button type="button" class="btn btn-cancel" onclick="closeEditModal('modal-edit-event')">Batal</button>
+        </form>
+    </div>
+</div>
 
+<!-- Modal Edit Pemasukan -->
+<div id="modal-edit-pemasukan" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
+    <div style="background:#fff; margin:10% auto; padding:20px; width:400px; border-radius:8px;">
+        <h3>Edit Pemasukan</h3>
+        <form id="form-edit-pemasukan">
+            <input type="hidden" id="edit-in-id">
+            <label>Pilih Event:</label><br>
+            <select id="edit-in-event" required style="width:100%; margin-bottom:10px;"></select><br>
+            <label>Tanggal:</label><br>
+            <input type="date" id="edit-in-tanggal" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Keterangan:</label><br>
+            <input type="text" id="edit-in-ket" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Nominal (Rp):</label><br>
+            <input type="number" id="edit-in-nominal" required style="width:100%; margin-bottom:15px;"><br>
+            <button type="submit" class="btn" style="background:#28a745; color:#fff;">Simpan Perubahan</button>
+            <button type="button" class="btn btn-cancel" onclick="closeEditModal('modal-edit-pemasukan')">Batal</button>
+        </form>
+    </div>
+</div>
+<!-- Modal Edit Pengeluaran -->
+<div id="modal-edit-pengeluaran" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
+    <div style="background:#fff; margin:10% auto; padding:20px; width:400px; border-radius:8px;">
+        <h3>Edit Pengeluaran</h3>
+        <form id="form-edit-pengeluaran">
+            <input type="hidden" id="edit-out-id">
+            <label>Pilih Event:</label><br>
+            <select id="edit-out-event" required style="width:100%; margin-bottom:10px;"></select><br>
+            <label>Tanggal:</label><br>
+            <input type="date" id="edit-out-tanggal" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Kategori:</label><br>
+            <input type="text" id="edit-out-kategori" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Nama Vendor:</label><br>
+            <input type="text" id="edit-out-vendor" required style="width:100%; margin-bottom:10px;"><br>
+            <label>Nominal (Rp):</label><br>
+            <input type="number" id="edit-out-nominal" required style="width:100%; margin-bottom:15px;"><br>
+            <button type="submit" class="btn" style="background:#28a745; color:#fff;">Simpan Perubahan</button>
+            <button type="button" class="btn btn-cancel" onclick="closeEditModal('modal-edit-pengeluaran')">Batal</button>
+        </form>
+    </div>
+</div>
  <script>
     // CONFIG SUPABASE (Ganti dengan URL & Key milikmu dari Supabase)
     const SUPABASE_URL = "https://mfibulemkkbjchhccucj.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1maWJ1bGVta2tiamNoaGNjdWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3Njk0MzYsImV4cCI6MjEwNDM0NTQzNn0.VfCPeiSt7qk7cTuHDtlDVTUnYG1jPPy9s3zYhiG7LDc";
     
     // Inisialisasi client Supabase
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let db = { events: [], pemasukan: [], pengeluaran: [] };
 
     // AMBIL DATA DARI SUPABASE
     async function fetchAllData() {
         try {
-            const { data: events, error: errEv } = await supabaseClient.from('events').select('*');
-            const { data: pemasukan, error: errIn } = await supabaseClient.from('pemasukan').select('*');
-            const { data: pengeluaran, error: errOut } = await supabaseClient.from('pengeluaran').select('*');
-
-            if (errEv || errIn || errOut) {
-                console.error("Error Supabase:", errEv || errIn || errOut);
-            }
+            const { data: events } = await supabaseClient.from('events').select('*');
+            const { data: pemasukan } = await supabaseClient.from('pemasukan').select('*');
+            const { data: pengeluaran } = await supabaseClient.from('pengeluaran').select('*');
 
             db.events = events || [];
             db.pemasukan = (pemasukan || []).map(p => ({ ...p, eventId: p.event_id }));
@@ -600,21 +654,15 @@
         return "Rp " + Number(val || 0).toLocaleString("id-ID");
     }
 
-    // FUNGSI SWITCH TAB PERBAIKAN (Agar tab bisa diklik)
     function switchTab(tabName, evt) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         
-        if (evt && evt.target) {
-            evt.target.classList.add('active');
-        } else if (window.event && window.event.target) {
-            window.event.target.classList.add('active');
-        }
+        if (evt && evt.target) evt.target.classList.add('active');
+        else if (window.event && window.event.target) window.event.target.classList.add('active');
         
         const targetTab = document.getElementById(`tab-${tabName}`);
-        if (targetTab) {
-            targetTab.classList.add('active');
-        }
+        if (targetTab) targetTab.classList.add('active');
         renderAll();
     }
 
@@ -627,23 +675,15 @@
     function renderEventSelects() {
         const inSelect = document.getElementById('in-event');
         const outSelect = document.getElementById('out-event');
-        if (!inSelect || !outSelect) return;
+        const editInSelect = document.getElementById('edit-in-event');
+        const editOutSelect = document.getElementById('edit-out-event');
 
-        inSelect.innerHTML = '';
-        outSelect.innerHTML = '';
-
-        if (db.events.length === 0) {
-            const emptyOpt = `<option value="">-- Tambahkan Event Dahulu --</option>`;
-            inSelect.innerHTML = emptyOpt;
-            outSelect.innerHTML = emptyOpt;
-            return;
-        }
-
-        db.events.forEach(ev => {
-            const opt = `<option value="${ev.id}">${ev.nama} (${ev.id})</option>`;
-            inSelect.innerHTML += opt;
-            outSelect.innerHTML += opt;
-        });
+        const options = db.events.map(ev => `<option value="${ev.id}">${ev.nama} (${ev.id})</option>`).join('');
+        
+        if (inSelect) inSelect.innerHTML = options;
+        if (outSelect) outSelect.innerHTML = options;
+        if (editInSelect) editInSelect.innerHTML = options;
+        if (editOutSelect) editOutSelect.innerHTML = options;
     }
 
     function renderTables() {
@@ -661,6 +701,7 @@
                     <td>${formatRp(ev.kontrak)}</td>
                     <td>
                         <button class="btn btn-sm btn-invoice" onclick="generateInvoice('${ev.id}')">Invoice</button>
+                        <button class="btn btn-sm" style="background:#ffc107; color:#000;" onclick="openEditEvent('${ev.id}')">Edit</button>
                         <button class="btn btn-sm btn-delete" onclick="deleteEvent('${ev.id}')">Hapus</button>
                     </td>
                 </tr>
@@ -677,6 +718,7 @@
                         <td>${p.ket}</td>
                         <td style="color: green; font-weight: bold;">${formatRp(p.nominal)}</td>
                         <td>
+                            <button class="btn btn-sm" style="background:#ffc107; color:#000;" onclick="openEditPemasukan(${p.id})">Edit</button>
                             <button class="btn btn-sm btn-delete" onclick="deletePemasukan(${p.id})">Hapus</button>
                         </td>
                     </tr>
@@ -695,6 +737,7 @@
                         <td>${p.vendor}</td>
                         <td style="color: red; font-weight: bold;">${formatRp(p.nominal)}</td>
                         <td>
+                            <button class="btn btn-sm" style="background:#ffc107; color:#000;" onclick="openEditPengeluaran(${p.id})">Edit</button>
                             <button class="btn btn-sm btn-delete" onclick="deletePengeluaran(${p.id})">Hapus</button>
                         </td>
                     </tr>
@@ -738,7 +781,7 @@
         document.getElementById('stat-laba').innerText = formatRp(totalKontrak - totalKeluar);
     }
 
-    // CETAK INVOICE
+    // --- CETAK INVOICE ---
     function generateInvoice(eventId) {
         const ev = db.events.find(e => e.id === eventId);
         if (!ev) return;
@@ -781,7 +824,97 @@
         document.getElementById('modal-invoice').style.display = 'none';
     }
 
-    // --- FORM EVENT ---
+    // --- FUNGSI EDIT EVENT ---
+    function openEditEvent(id) {
+        const ev = db.events.find(e => e.id === id);
+        if (!ev) return;
+        document.getElementById('edit-ev-id').value = ev.id;
+        document.getElementById('edit-ev-nama').value = ev.nama;
+        document.getElementById('edit-ev-klien').value = ev.klien;
+        document.getElementById('edit-ev-tanggal').value = ev.tanggal;
+        document.getElementById('edit-ev-kontrak').value = ev.kontrak;
+        document.getElementById('modal-edit-event').style.display = 'block';
+    }
+
+    document.getElementById('form-edit-event').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-ev-id').value;
+        const payload = {
+            nama: document.getElementById('edit-ev-nama').value,
+            klien: document.getElementById('edit-ev-klien').value,
+            tanggal: document.getElementById('edit-ev-tanggal').value,
+            kontrak: Number(document.getElementById('edit-ev-kontrak').value)
+        };
+        const { error } = await supabaseClient.from('events').update(payload).eq('id', id);
+        if (!error) {
+            closeEditModal('modal-edit-event');
+            fetchAllData();
+        } else alert("Gagal update event: " + error.message);
+    });
+
+    // --- FUNGSI EDIT PEMASUKAN ---
+    function openEditPemasukan(id) {
+        const p = db.pemasukan.find(item => item.id === id);
+        if (!p) return;
+        document.getElementById('edit-in-id').value = p.id;
+        document.getElementById('edit-in-event').value = p.eventId;
+        document.getElementById('edit-in-tanggal').value = p.tanggal;
+        document.getElementById('edit-in-ket').value = p.ket;
+        document.getElementById('edit-in-nominal').value = p.nominal;
+        document.getElementById('modal-edit-pemasukan').style.display = 'block';
+    }
+
+    document.getElementById('form-edit-pemasukan').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-in-id').value;
+        const payload = {
+            event_id: document.getElementById('edit-in-event').value,
+            tanggal: document.getElementById('edit-in-tanggal').value,
+            ket: document.getElementById('edit-in-ket').value,
+            nominal: Number(document.getElementById('edit-in-nominal').value)
+        };
+        const { error } = await supabaseClient.from('pemasukan').update(payload).eq('id', id);
+        if (!error) {
+            closeEditModal('modal-edit-pemasukan');
+            fetchAllData();
+        } else alert("Gagal update pemasukan: " + error.message);
+    });
+
+    // --- FUNGSI EDIT PENGELUARAN ---
+    function openEditPengeluaran(id) {
+        const p = db.pengeluaran.find(item => item.id === id);
+        if (!p) return;
+        document.getElementById('edit-out-id').value = p.id;
+        document.getElementById('edit-out-event').value = p.eventId;
+        document.getElementById('edit-out-tanggal').value = p.tanggal;
+        document.getElementById('edit-out-kategori').value = p.kategori;
+        document.getElementById('edit-out-vendor').value = p.vendor;
+        document.getElementById('edit-out-nominal').value = p.nominal;
+        document.getElementById('modal-edit-pengeluaran').style.display = 'block';
+    }
+
+    document.getElementById('form-edit-pengeluaran').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-out-id').value;
+        const payload = {
+            event_id: document.getElementById('edit-out-event').value,
+            tanggal: document.getElementById('edit-out-tanggal').value,
+            kategori: document.getElementById('edit-out-kategori').value,
+            vendor: document.getElementById('edit-out-vendor').value,
+            nominal: Number(document.getElementById('edit-out-nominal').value)
+        };
+        const { error } = await supabaseClient.from('pengeluaran').update(payload).eq('id', id);
+        if (!error) {
+            closeEditModal('modal-edit-pengeluaran');
+            fetchAllData();
+        } else alert("Gagal update pengeluaran: " + error.message);
+    });
+
+    function closeEditModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // --- FORM INPUT TAMBAH DATA ---
     document.getElementById('form-event').addEventListener('submit', async function(e) {
         e.preventDefault();
         const newId = `EVT-${String(db.events.length + 1).padStart(3, '0')}`;
@@ -792,24 +925,20 @@
             tanggal: document.getElementById('ev-tanggal').value,
             kontrak: Number(document.getElementById('ev-kontrak').value)
         };
-
         const { error } = await supabaseClient.from('events').insert([payload]);
         if (!error) {
             document.getElementById('form-event').reset();
             fetchAllData();
-        } else {
-            alert("Gagal menyimpan event: " + error.message);
-        }
+        } else alert("Gagal menyimpan event: " + error.message);
     });
 
     async function deleteEvent(id) {
-        if (confirm(`Hapus Event ${id}? Semua transaksi terkait juga akan terhapus.`)) {
+        if (confirm(`Hapus Event ${id}?`)) {
             await supabaseClient.from('events').delete().eq('id', id);
             fetchAllData();
         }
     }
 
-    // --- FORM PEMASUKAN ---
     document.getElementById('form-pemasukan').addEventListener('submit', async function(e) {
         e.preventDefault();
         const payload = {
@@ -818,14 +947,11 @@
             ket: document.getElementById('in-ket').value,
             nominal: Number(document.getElementById('in-nominal').value)
         };
-
         const { error } = await supabaseClient.from('pemasukan').insert([payload]);
         if (!error) {
             document.getElementById('form-pemasukan').reset();
             fetchAllData();
-        } else {
-            alert("Gagal menyimpan pemasukan: " + error.message);
-        }
+        } else alert("Gagal menyimpan pemasukan: " + error.message);
     });
 
     async function deletePemasukan(id) {
@@ -835,7 +961,6 @@
         }
     }
 
-    // --- FORM PENGELUARAN ---
     document.getElementById('form-pengeluaran').addEventListener('submit', async function(e) {
         e.preventDefault();
         const payload = {
@@ -845,29 +970,25 @@
             vendor: document.getElementById('out-vendor').value,
             nominal: Number(document.getElementById('out-nominal').value)
         };
-
         const { error } = await supabaseClient.from('pengeluaran').insert([payload]);
         if (!error) {
             document.getElementById('form-pengeluaran').reset();
             fetchAllData();
-        } else {
-            alert("Gagal menyimpan pengeluaran: " + error.message);
-        }
+        } else alert("Gagal menyimpan pengeluaran: " + error.message);
     });
 
     async function deletePengeluaran(id) {
-        if (confirm("Hapus catatan pengeluaran vendor ini?")) {
+        if (confirm("Hapus catatan pengeluaran ini?")) {
             await supabaseClient.from('pengeluaran').delete().eq('id', id);
             fetchAllData();
         }
     }
 
-    // Realtime listener
+    // Realtime Listener
     supabaseClient.channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, () => fetchAllData())
       .subscribe();
 
-    // Jalankan ambil data awal
     fetchAllData();
 </script>
 </body>
