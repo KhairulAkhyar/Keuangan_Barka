@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Keuangan EO Barka</title>
+    <style>
+        :root {
+            --primary: #1A365D;
+            --accent: #2B6CB0;
+            --bg: #F7FAFC;
+            --surface: #FFFFFF;
+            --text: #2D3748;
+            --success: #38A169;
+            --danger: #E53E3E;
+            --warning: #D69E2E;
+            --border: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 2rem;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h1 { font-size: 1.3rem; }
+        header p { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+
+        .nav-tabs {
+            display: flex;
+            background-color: white;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.2rem;
+            border: none;
+            background: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #718096;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        .stat-card h3 { font-size: 0.75rem; color: #718096; text-transform: uppercase; }
+        .stat-card p { font-size: 1.15rem; font-weight: bold; color: var(--primary); margin-top: 0.25rem; }
+
+        .card {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 1.2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: #4A5568;
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.55rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn-cancel { background-color: #A0AEC0; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; }
+        .btn-edit { background-color: var(--warning); color: white; border: none; cursor: pointer; }
+        .btn-delete { background-color: var(--danger); color: white; border: none; cursor: pointer; }
+        .btn-invoice { background-color: var(--success); color: white; border: none; cursor: pointer; }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 600px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.65rem 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #EDF2F7;
+            color: var(--primary);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .badge-success { background: #DEF7EC; color: #03543F; }
+        .badge-warning { background: #FEF08A; color: #713F12; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* MODAL INVOICE */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 750px;
+            margin: 2rem auto;
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .invoice-box {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .invoice-header h2 { color: var(--primary); font-size: 1.8rem; }
+        .invoice-header p { font-size: 0.85rem; color: #666; }
+
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+
+        .invoice-table th { background: var(--primary); color: white; padding: 0.6rem; }
+        .invoice-table td { padding: 0.6rem; border-bottom: 1px solid #ddd; }
+
+        .invoice-total {
+            text-align: right;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        .invoice-footer {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 0.85rem;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #modal-invoice, #modal-invoice * { visibility: visible; }
+            #modal-invoice { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+            .no-print { display: none !important; }
+        }
+
+        @media (max-width: 600px) {
+            header { padding: 1rem; }
+            header h1 { font-size: 1.1rem; }
+            .container { padding: 0 0.5rem; margin: 1rem auto; }
+            .card { padding: 1rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="no-print">
+        <h1>Keuangan EO Barka</h1>
+        <p>Manajemen Transaksi, Cetak Invoice & Laba Rugi Event</p>
+    </header>
+
+    <div class="nav-tabs no-print">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard & Laba Rugi</button>
+        <button class="tab-btn" onclick="switchTab('event')">Kelola Event & Cetak Invoice</button>
+        <button class="tab-btn" onclick="switchTab('pemasukan')">Pemasukan (Klien)</button>
+        <button class="tab-btn" onclick="switchTab('pengeluaran')">Pengeluaran (Vendor)</button>
+    </div>
+
+    <div class="container no-print">
+        <!-- TAB 1: DASHBOARD -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left-color: #3182CE;">
+                    <h3>TOTAL KONTRAK</h3>
+                    <p id="stat-kontrak">Rp 0</p>
+                </div>
+                <div class="stat-card" style="border-left-color: #38A169;">
+                    <h3>PEMASUKAN MASUK</h3>
+                    <p id="stat-masuk">Rp 0</p>
+                </div>
+                <div class="stat-card" style="border-left-color: #E53E3E;">
+                    <h3>BIAYA VENDOR</h3>
+                    <p id="stat-keluar">Rp 0</p>
+                </div>
+                <div class="stat-card" style="border-left-color: #805AD5;">
+                    <h3>LABA BERSIH</h3>
+                    <p id="stat-laba">Rp 0</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Ringkasan Laba Rugi Per Event</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Event</th>
+                                <th>Nama Event</th>
+                                <th>Nilai Kontrak</th>
+                                <th>Total Masuk</th>
+                                <th>Total Keluar</th>
+                                <th>Estimasi Laba</th>
+                                <th>Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-dashboard"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: EVENT -->
+        <div id="tab-event" class="tab-content">
+            <div class="card">
+                <h2 id="form-event-title">Tambah Event Baru</h2>
+                <form id="form-event">
+                    <input type="hidden" id="ev-edit-id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nama Event</label>
+                            <input type="text" id="ev-nama" placeholder="Wedding Rizky & Maya" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Klien</label>
+                            <input type="text" id="ev-klien" placeholder="Rizky" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Event</label>
+                            <input type="date" id="ev-tanggal" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nilai Kontrak (Rp)</label>
+                            <input type="number" id="ev-kontrak" placeholder="150000000" required>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="btn-ev-submit">Simpan Event</button>
+                        <button type="button" class="btn btn-cancel" id="btn-ev-cancel" style="display:none;" onclick="resetEventForm()">Batal</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Daftar Proyek Event</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama Event</th>
+                                <th>Klien</th>
+                                <th>Tanggal</th>
+                                <th>Kontrak</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-event"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PEMASUKAN -->
+        <div id="tab-pemasukan" class="tab-content">
+            <div class="card">
+                <h2 id="form-in-title">Input Pemasukan Klien</h2>
+                <form id="form-pemasukan">
+                    <input type="hidden" id="in-edit-idx">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Pilih Event</label>
+                            <select id="in-event" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal</label>
+                            <input type="date" id="in-tanggal" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Keterangan</label>
+                            <input type="text" id="in-ket" placeholder="DP 30% / Pelunasan" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nominal Pembayaran (Rp)</label>
+                            <input type="number" id="in-nominal" placeholder="45000000" required>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="btn-in-submit">Simpan Pemasukan</button>
+                        <button type="button" class="btn btn-cancel" id="btn-in-cancel" style="display:none;" onclick="resetInForm()">Batal</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Riwayat Pemasukan</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Event</th>
+                                <th>Keterangan</th>
+                                <th>Nominal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-pemasukan"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: PENGELUARAN -->
+        <div id="tab-pengeluaran" class="tab-content">
+            <div class="card">
+                <h2 id="form-out-title">Input Pengeluaran Vendor</h2>
+                <form id="form-pengeluaran">
+                    <input type="hidden" id="out-edit-idx">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Pilih Event</label>
+                            <select id="out-event" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal</label>
+                            <input type="date" id="out-tanggal" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Kategori Vendor</label>
+                            <input type="text" id="out-kategori" placeholder="Catering / Dekorasi" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Vendor</label>
+                            <input type="text" id="out-vendor" placeholder="Nama Vendor" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nominal Biaya (Rp)</label>
+                            <input type="number" id="out-nominal" placeholder="20000000" required>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="btn-out-submit">Simpan Pengeluaran</button>
+                        <button type="button" class="btn btn-cancel" id="btn-out-cancel" style="display:none;" onclick="resetOutForm()">Batal</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Riwayat Pengeluaran Vendor</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Event</th>
+                                <th>Kategori</th>
+                                <th>Vendor</th>
+                                <th>Nominal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-pengeluaran"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CETAK INVOICE -->
+    <div id="modal-invoice" class="modal">
+        <div class="modal-content">
+            <div class="invoice-box">
+                <div class="invoice-header">
+                    <div>
+                        <h2>EO BARKA</h2>
+                        <p>Event Organizer & Management Services</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h3 style="color: var(--accent);">INVOICE</h3>
+                        <p id="inv-no">No: INV/2026/001</p>
+                        <p id="inv-date">Tanggal: 07/09/2026</p>
+                    </div>
+                </div>
+
+                <div class="invoice-details">
+                    <div>
+                        <strong>Ditujukan Kepada:</strong><br>
+                        <span id="inv-klien">Nama Klien</span><br>
+                        <span id="inv-event">Nama Event</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>Tanggal Event:</strong><br>
+                        <span id="inv-tgl-event">15/10/2026</span>
+                    </div>
+                </div>
+
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>Keterangan / Rincian Layanan</th>
+                            <th style="text-align: right;">Nominal (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-items"></tbody>
+                </table>
+
+                <div class="invoice-total">
+                    <p>Total Nilai Kontrak: <strong id="inv-total-kontrak">Rp 0</strong></p>
+                    <p style="color: green;">Total Sudah Dibayar: <strong id="inv-total-masuk">Rp 0</strong></p>
+                    <p style="color: red; font-size: 1.1rem; margin-top: 5px;">Sisa Tagihan / Pelunasan: <strong id="inv-sisa">Rp 0</strong></p>
+                </div>
+
+                <div class="invoice-footer">
+                    <div>
+                        <p><strong>Pembayaran Via Transfer:</strong></p>
+                        <p>Bank BCA: 846-562-3400 a.n. Aprilia Nur Azzizah</p>
+                        
+                    </div>
+                    <div style="text-align: center;">
+                        <p>Hormat Kami,</p>
+                        <br><br>
+                        <p><strong>( EO Barka Management )</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group no-print" style="margin-top: 1.5rem; justify-content: flex-end;">
+                <button class="btn" onclick="window.print()">Cetak / Download PDF</button>
+                <button class="btn btn-cancel" onclick="closeInvoiceModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultData = {
+            events: [
+                { id: "EVT-001", nama: "Wedding Rizky & Maya", klien: "Rizky", tanggal: "2026-10-15", kontrak: 150000000 },
+                { id: "EVT-002", nama: "Gathering PT ABC", klien: "Pak Budi", tanggal: "2026-11-20", kontrak: 85000000 }
+            ],
+            pemasukan: [
+                { eventId: "EVT-001", tanggal: "2026-09-01", ket: "DP 30% Klien", nominal: 45000000 },
+                { eventId: "EVT-002", tanggal: "2026-09-05", ket: "Pelunasan Klien", nominal: 85000000 }
+            ],
+            pengeluaran: [
+                { eventId: "EVT-001", tanggal: "2026-09-02", kategori: "Dekorasi", vendor: "Florist Jaya", nominal: 25000000 },
+                { eventId: "EVT-001", tanggal: "2026-09-03", kategori: "Catering", vendor: "Sedap Rasa", nominal: 40000000 }
+            ]
+        };
+
+        let db = JSON.parse(localStorage.getItem('eo_barka_db')) || defaultData;
+
+        function saveDB() {
+            localStorage.setItem('eo_barka_db', JSON.stringify(db));
+            renderAll();
+        }
+
+        function formatRp(val) {
+            return "Rp " + Number(val).toLocaleString("id-ID");
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            renderAll();
+        }
+
+        function renderAll() {
+            renderEventSelects();
+            renderTables();
+            renderDashboard();
+        }
+
+        function renderEventSelects() {
+            const inSelect = document.getElementById('in-event');
+            const outSelect = document.getElementById('out-event');
+            inSelect.innerHTML = '';
+            outSelect.innerHTML = '';
+
+            if (db.events.length === 0) {
+                const emptyOpt = `<option value="">-- Tambahkan Event Dahulu --</option>`;
+                inSelect.innerHTML = emptyOpt;
+                outSelect.innerHTML = emptyOpt;
+                return;
+            }
+
+            db.events.forEach(ev => {
+                const opt = `<option value="${ev.id}">${ev.nama} (${ev.id})</option>`;
+                inSelect.innerHTML += opt;
+                outSelect.innerHTML += opt;
+            });
+        }
+
+        function renderTables() {
+            document.getElementById('tb-event').innerHTML = db.events.map(ev => `
+                <tr>
+                    <td><b>${ev.id}</b></td>
+                    <td>${ev.nama}</td>
+                    <td>${ev.klien}</td>
+                    <td>${ev.tanggal}</td>
+                    <td>${formatRp(ev.kontrak)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-invoice" onclick="generateInvoice('${ev.id}')">Invoice</button>
+                        <button class="btn btn-sm btn-edit" onclick="editEvent('${ev.id}')">Edit</button>
+                        <button class="btn btn-sm btn-delete" onclick="deleteEvent('${ev.id}')">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('tb-pemasukan').innerHTML = db.pemasukan.map((p, idx) => {
+                const ev = db.events.find(e => e.id === p.eventId);
+                return `
+                    <tr>
+                        <td>${p.tanggal}</td>
+                        <td>${ev ? ev.nama : p.eventId}</td>
+                        <td>${p.ket}</td>
+                        <td style="color: green; font-weight: bold;">${formatRp(p.nominal)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-edit" onclick="editPemasukan(${idx})">Edit</button>
+                            <button class="btn btn-sm btn-delete" onclick="deletePemasukan(${idx})">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('tb-pengeluaran').innerHTML = db.pengeluaran.map((p, idx) => {
+                const ev = db.events.find(e => e.id === p.eventId);
+                return `
+                    <tr>
+                        <td>${p.tanggal}</td>
+                        <td>${ev ? ev.nama : p.eventId}</td>
+                        <td>${p.kategori}</td>
+                        <td>${p.vendor}</td>
+                        <td style="color: red; font-weight: bold;">${formatRp(p.nominal)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-edit" onclick="editPengeluaran(${idx})">Edit</button>
+                            <button class="btn btn-sm btn-delete" onclick="deletePengeluaran(${idx})">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderDashboard() {
+            let totalKontrak = 0, totalMasuk = 0, totalKeluar = 0;
+            
+            document.getElementById('tb-dashboard').innerHTML = db.events.map(ev => {
+                const masuk = db.pemasukan.filter(p => p.eventId === ev.id).reduce((sum, p) => sum + p.nominal, 0);
+                const keluar = db.pengeluaran.filter(p => p.eventId === ev.id).reduce((sum, p) => sum + p.nominal, 0);
+                const laba = ev.kontrak - keluar;
+                const margin = ev.kontrak > 0 ? ((laba / ev.kontrak) * 100).toFixed(1) : 0;
+
+                totalKontrak += ev.kontrak;
+                totalMasuk += masuk;
+                totalKeluar += keluar;
+
+                return `
+                    <tr>
+                        <td><b>${ev.id}</b></td>
+                        <td>${ev.nama}</td>
+                        <td>${formatRp(ev.kontrak)}</td>
+                        <td style="color: green;">${formatRp(masuk)}</td>
+                        <td style="color: red;">${formatRp(keluar)}</td>
+                        <td style="font-weight: bold;">${formatRp(laba)}</td>
+                        <td><span class="badge ${margin >= 20 ? 'badge-success' : 'badge-warning'}">${margin}%</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('stat-kontrak').innerText = formatRp(totalKontrak);
+            document.getElementById('stat-masuk').innerText = formatRp(totalMasuk);
+            document.getElementById('stat-keluar').innerText = formatRp(totalKeluar);
+            document.getElementById('stat-laba').innerText = formatRp(totalKontrak - totalKeluar);
+        }
+
+        // CETAK INVOICE
+        function generateInvoice(eventId) {
+            const ev = db.events.find(e => e.id === eventId);
+            if (!ev) return;
+
+            const payments = db.pemasukan.filter(p => p.eventId === eventId);
+            const totalMasuk = payments.reduce((sum, p) => sum + p.nominal, 0);
+            const sisaTagihan = ev.kontrak - totalMasuk;
+
+            document.getElementById('inv-no').innerText = "No: INV/" + ev.id.replace('EVT-', '');
+            document.getElementById('inv-date').innerText = "Tanggal Cetak: " + new Date().toISOString().split('T')[0];
+            document.getElementById('inv-klien').innerText = ev.klien;
+            document.getElementById('inv-event').innerText = ev.nama;
+            document.getElementById('inv-tgl-event').innerText = ev.tanggal;
+
+            let itemsHtml = `
+                <tr>
+                    <td><strong>Jasa Event Management / Paket Kontrak</strong></td>
+                    <td style="text-align: right;">${formatRp(ev.kontrak)}</td>
+                </tr>
+            `;
+
+            payments.forEach(p => {
+                itemsHtml += `
+                    <tr style="color: green;">
+                        <td><em>Pembayaran Masuk: ${p.ket} (${p.tanggal})</em></td>
+                        <td style="text-align: right;">- ${formatRp(p.nominal)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('inv-items').innerHTML = itemsHtml;
+            document.getElementById('inv-total-kontrak').innerText = formatRp(ev.kontrak);
+            document.getElementById('inv-total-masuk').innerText = formatRp(totalMasuk);
+            document.getElementById('inv-sisa').innerText = formatRp(sisaTagihan);
+
+            document.getElementById('modal-invoice').style.display = 'block';
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('modal-invoice').style.display = 'none';
+        }
+
+        // --- CRUD EVENT ---
+        document.getElementById('form-event').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('ev-edit-id').value;
+            const nama = document.getElementById('ev-nama').value;
+            const klien = document.getElementById('ev-klien').value;
+            const tanggal = document.getElementById('ev-tanggal').value;
+            const kontrak = Number(document.getElementById('ev-kontrak').value);
+
+            if (editId) {
+                const ev = db.events.find(e => e.id === editId);
+                ev.nama = nama; ev.klien = klien; ev.tanggal = tanggal; ev.kontrak = kontrak;
+            } else {
+                const newId = `EVT-${String(db.events.length + 1).padStart(3, '0')}`;
+                db.events.push({ id: newId, nama, klien, tanggal, kontrak });
+            }
+            
+            resetEventForm();
+            saveDB();
+        });
+
+        function editEvent(id) {
+            const ev = db.events.find(e => e.id === id);
+            if (!ev) return;
+            document.getElementById('ev-edit-id').value = ev.id;
+            document.getElementById('ev-nama').value = ev.nama;
+            document.getElementById('ev-klien').value = ev.klien;
+            document.getElementById('ev-tanggal').value = ev.tanggal;
+            document.getElementById('ev-kontrak').value = ev.kontrak;
+            
+            document.getElementById('form-event-title').innerText = "Edit Event (" + ev.id + ")";
+            document.getElementById('btn-ev-submit').innerText = "Update Event";
+            document.getElementById('btn-ev-cancel').style.display = "inline-block";
+        }
+
+        function deleteEvent(id) {
+            if (confirm(`Hapus Event ${id}? Semua transaksi terkait juga akan terhapus.`)) {
+                db.events = db.events.filter(e => e.id !== id);
+                db.pemasukan = db.pemasukan.filter(p => p.eventId !== id);
+                db.pengeluaran = db.pengeluaran.filter(p => p.eventId !== id);
+                saveDB();
+            }
+        }
+
+        function resetEventForm() {
+            document.getElementById('form-event').reset();
+            document.getElementById('ev-edit-id').value = '';
+            document.getElementById('form-event-title').innerText = "Tambah Event Baru";
+            document.getElementById('btn-ev-submit').innerText = "Simpan Event";
+            document.getElementById('btn-ev-cancel').style.display = "none";
+        }
+
+        // --- CRUD PEMASUKAN ---
+        document.getElementById('form-pemasukan').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editIdx = document.getElementById('in-edit-idx').value;
+            const data = {
+                eventId: document.getElementById('in-event').value,
+                tanggal: document.getElementById('in-tanggal').value,
+                ket: document.getElementById('in-ket').value,
+                nominal: Number(document.getElementById('in-nominal').value)
+            };
+
+            if (editIdx !== "") {
+                db.pemasukan[editIdx] = data;
+            } else {
+                db.pemasukan.push(data);
+            }
+
+            resetInForm();
+            saveDB();
+        });
+
+        function editPemasukan(idx) {
+            const p = db.pemasukan[idx];
+            document.getElementById('in-edit-idx').value = idx;
+            document.getElementById('in-event').value = p.eventId;
+            document.getElementById('in-tanggal').value = p.tanggal;
+            document.getElementById('in-ket').value = p.ket;
+            document.getElementById('in-nominal').value = p.nominal;
+
+            document.getElementById('form-in-title').innerText = "Edit Pemasukan";
+            document.getElementById('btn-in-submit').innerText = "Update Pemasukan";
+            document.getElementById('btn-in-cancel').style.display = "inline-block";
+        }
+
+        function deletePemasukan(idx) {
+            if (confirm("Hapus catatan pemasukan ini?")) {
+                db.pemasukan.splice(idx, 1);
+                saveDB();
+            }
+        }
+
+        function resetInForm() {
+            document.getElementById('form-pemasukan').reset();
+            document.getElementById('in-edit-idx').value = '';
+            document.getElementById('form-in-title').innerText = "Input Pemasukan Klien";
+            document.getElementById('btn-in-submit').innerText = "Simpan Pemasukan";
+            document.getElementById('btn-in-cancel').style.display = "none";
+        }
+
+        // --- CRUD PENGELUARAN ---
+        document.getElementById('form-pengeluaran').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editIdx = document.getElementById('out-edit-idx').value;
+            const data = {
+                eventId: document.getElementById('out-event').value,
+                tanggal: document.getElementById('out-tanggal').value,
+                kategori: document.getElementById('out-kategori').value,
+                vendor: document.getElementById('out-vendor').value,
+                nominal: Number(document.getElementById('out-nominal').value)
+            };
+
+            if (editIdx !== "") {
+                db.pengeluaran[editIdx] = data;
+            } else {
+                db.pengeluaran.push(data);
+            }
+
+            resetOutForm();
+            saveDB();
+        });
+
+        function editPengeluaran(idx) {
+            const p = db.pengeluaran[idx];
+            document.getElementById('out-edit-idx').value = idx;
+            document.getElementById('out-event').value = p.eventId;
+            document.getElementById('out-tanggal').value = p.tanggal;
+            document.getElementById('out-kategori').value = p.kategori;
+            document.getElementById('out-vendor').value = p.vendor;
+            document.getElementById('out-nominal').value = p.nominal;
+
+            document.getElementById('form-out-title').innerText = "Edit Pengeluaran";
+            document.getElementById('btn-out-submit').innerText = "Update Pengeluaran";
+            document.getElementById('btn-out-cancel').style.display = "inline-block";
+        }
+
+        function deletePengeluaran(idx) {
+            if (confirm("Hapus catatan pengeluaran vendor ini?")) {
+                db.pengeluaran.splice(idx, 1);
+                saveDB();
+            }
+        }
+
+        function resetOutForm() {
+            document.getElementById('form-pengeluaran').reset();
+            document.getElementById('out-edit-idx').value = '';
+            document.getElementById('form-out-title').innerText = "Input Pengeluaran Vendor";
+            document.getElementById('btn-out-submit').innerText = "Simpan Pengeluaran";
+            document.getElementById('btn-out-cancel').style.display = "none";
+        }
+
+        // Initialize
+        renderAll();
+    </script>
+</body>
+</html>
