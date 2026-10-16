@@ -393,6 +393,26 @@
                 </div>
             </div>
         </div>
+        <div class="card" style="margin-top: 20px;">
+    <h3>Tambah Biaya Ekstra / Tambahan untuk Invoice</h3>
+    <form id="form-extra-item">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Pilih Event</label>
+                <select id="ext-event" required></select>
+            </div>
+            <div class="form-group">
+                <label>Keterangan Biaya Tambahan</label>
+                <input type="text" id="ext-ket" placeholder="Contoh: Tambah Jam / Sewa Genset" required>
+            </div>
+            <div class="form-group">
+                <label>Nominal (Rp)</label>
+                <input type="number" id="ext-nominal" placeholder="500000" required>
+            </div>
+        </div>
+        <button type="submit" class="btn">Simpan Biaya Tambahan</button>
+    </form>
+</div>
 
         <!-- TAB 3: PEMASUKAN -->
         <div id="tab-pemasukan" class="tab-content">
@@ -629,24 +649,24 @@
     const SUPABASE_URL = "https://mfibulemkkbjchhccucj.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1maWJ1bGVta2tiamNoaGNjdWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3Njk0MzYsImV4cCI6MjEwNDM0NTQzNn0.VfCPeiSt7qk7cTuHDtlDVTUnYG1jPPy9s3zYhiG7LDc";
     
-    // Inisialisasi client Supabase
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let db = { events: [], pemasukan: [], pengeluaran: [] };
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let db = { events: [], pemasukan: [], pengeluaran: [], extraItems: [] };
 
-    // AMBIL DATA DARI SUPABASE
     async function fetchAllData() {
         try {
             const { data: events } = await supabaseClient.from('events').select('*');
             const { data: pemasukan } = await supabaseClient.from('pemasukan').select('*');
             const { data: pengeluaran } = await supabaseClient.from('pengeluaran').select('*');
+            const { data: extraItems } = await supabaseClient.from('invoice_items').select('*');
 
             db.events = events || [];
             db.pemasukan = (pemasukan || []).map(p => ({ ...p, eventId: p.event_id }));
             db.pengeluaran = (pengeluaran || []).map(p => ({ ...p, eventId: p.event_id }));
+            db.extraItems = (extraItems || []).map(item => ({ ...item, eventId: item.event_id }));
 
             renderAll();
         } catch (err) {
-            console.error("Gagal mengambil data dari Supabase:", err);
+            console.error("Gagal mengambil data:", err);
         }
     }
 
@@ -675,6 +695,7 @@
     function renderEventSelects() {
         const inSelect = document.getElementById('in-event');
         const outSelect = document.getElementById('out-event');
+        const extSelect = document.getElementById('ext-event');
         const editInSelect = document.getElementById('edit-in-event');
         const editOutSelect = document.getElementById('edit-out-event');
 
@@ -682,6 +703,7 @@
         
         if (inSelect) inSelect.innerHTML = options;
         if (outSelect) outSelect.innerHTML = options;
+        if (extSelect) extSelect.innerHTML = options;
         if (editInSelect) editInSelect.innerHTML = options;
         if (editOutSelect) editOutSelect.innerHTML = options;
     }
@@ -754,10 +776,13 @@
             tbDashboard.innerHTML = db.events.map(ev => {
                 const masuk = db.pemasukan.filter(p => p.eventId === ev.id).reduce((sum, p) => sum + Number(p.nominal), 0);
                 const keluar = db.pengeluaran.filter(p => p.eventId === ev.id).reduce((sum, p) => sum + Number(p.nominal), 0);
-                const laba = ev.kontrak - keluar;
-                const margin = ev.kontrak > 0 ? ((laba / ev.kontrak) * 100).toFixed(1) : 0;
+                const extras = db.extraItems.filter(item => item.eventId === ev.id).reduce((sum, item) => sum + Number(item.nominal), 0);
+                
+                const totalKontrakEvent = Number(ev.kontrak) + extras;
+                const laba = totalKontrakEvent - keluar;
+                const margin = totalKontrakEvent > 0 ? ((laba / totalKontrakEvent) * 100).toFixed(1) : 0;
 
-                totalKontrak += Number(ev.kontrak);
+                totalKontrak += totalKontrakEvent;
                 totalMasuk += masuk;
                 totalKeluar += keluar;
 
@@ -765,7 +790,7 @@
                     <tr>
                         <td><b>${ev.id}</b></td>
                         <td>${ev.nama}</td>
-                        <td>${formatRp(ev.kontrak)}</td>
+                        <td>${formatRp(totalKontrakEvent)} ${extras > 0 ? '<small style="color:blue;">(inc. ekstra)</small>' : ''}</td>
                         <td style="color: green;">${formatRp(masuk)}</td>
                         <td style="color: red;">${formatRp(keluar)}</td>
                         <td style="font-weight: bold;">${formatRp(laba)}</td>
@@ -781,14 +806,18 @@
         document.getElementById('stat-laba').innerText = formatRp(totalKontrak - totalKeluar);
     }
 
-    // --- CETAK INVOICE ---
+    // --- CETAK INVOICE DENGAN ITEM EKSTRA ---
     function generateInvoice(eventId) {
         const ev = db.events.find(e => e.id === eventId);
         if (!ev) return;
 
         const payments = db.pemasukan.filter(p => p.eventId === eventId);
+        const extras = db.extraItems.filter(item => item.eventId === eventId);
+        
         const totalMasuk = payments.reduce((sum, p) => sum + Number(p.nominal), 0);
-        const sisaTagihan = ev.kontrak - totalMasuk;
+        const totalExtra = extras.reduce((sum, item) => sum + Number(item.nominal), 0);
+        const totalKeseluruhanKontrak = Number(ev.kontrak) + totalExtra;
+        const sisaTagihan = totalKeseluruhanKontrak - totalMasuk;
 
         document.getElementById('inv-no').innerText = "No: INV/" + ev.id.replace('EVT-', '');
         document.getElementById('inv-date').innerText = "Tanggal Cetak: " + new Date().toISOString().split('T')[0];
@@ -798,10 +827,20 @@
 
         let itemsHtml = `
             <tr>
-                <td><strong>Jasa Event Management / Paket Kontrak</strong></td>
+                <td><strong>Paket Utama / Kontrak Event</strong></td>
                 <td style="text-align: right;">${formatRp(ev.kontrak)}</td>
             </tr>
         `;
+
+        // Masukkan item tambahan ke tabel invoice
+        extras.forEach(item => {
+            itemsHtml += `
+                <tr>
+                    <td>Biaya Ekstra: ${item.keterangan}</td>
+                    <td style="text-align: right;">${formatRp(item.nominal)}</td>
+                </tr>
+            `;
+        });
 
         payments.forEach(p => {
             itemsHtml += `
@@ -813,7 +852,7 @@
         });
 
         document.getElementById('inv-items').innerHTML = itemsHtml;
-        document.getElementById('inv-total-kontrak').innerText = formatRp(ev.kontrak);
+        document.getElementById('inv-total-kontrak').innerText = formatRp(totalKeseluruhanKontrak);
         document.getElementById('inv-total-masuk').innerText = formatRp(totalMasuk);
         document.getElementById('inv-sisa').innerText = formatRp(sisaTagihan);
 
@@ -824,97 +863,25 @@
         document.getElementById('modal-invoice').style.display = 'none';
     }
 
-    // --- FUNGSI EDIT EVENT ---
-    function openEditEvent(id) {
-        const ev = db.events.find(e => e.id === id);
-        if (!ev) return;
-        document.getElementById('edit-ev-id').value = ev.id;
-        document.getElementById('edit-ev-nama').value = ev.nama;
-        document.getElementById('edit-ev-klien').value = ev.klien;
-        document.getElementById('edit-ev-tanggal').value = ev.tanggal;
-        document.getElementById('edit-ev-kontrak').value = ev.kontrak;
-        document.getElementById('modal-edit-event').style.display = 'block';
-    }
-
-    document.getElementById('form-edit-event').addEventListener('submit', async function(e) {
+    // --- FORM SIMPAN BIAYA EKSTRA ---
+    document.getElementById('form-extra-item').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const id = document.getElementById('edit-ev-id').value;
         const payload = {
-            nama: document.getElementById('edit-ev-nama').value,
-            klien: document.getElementById('edit-ev-klien').value,
-            tanggal: document.getElementById('edit-ev-tanggal').value,
-            kontrak: Number(document.getElementById('edit-ev-kontrak').value)
+            event_id: document.getElementById('ext-event').value,
+            keterangan: document.getElementById('ext-ket').value,
+            nominal: Number(document.getElementById('ext-nominal').value)
         };
-        const { error } = await supabaseClient.from('events').update(payload).eq('id', id);
+        const { error } = await supabaseClient.from('invoice_items').insert([payload]);
         if (!error) {
-            closeEditModal('modal-edit-event');
+            document.getElementById('form-extra-item').reset();
             fetchAllData();
-        } else alert("Gagal update event: " + error.message);
+            alert("Biaya tambahan berhasil disimpan ke invoice!");
+        } else {
+            alert("Gagal menyimpan biaya tambahan: " + error.message);
+        }
     });
 
-    // --- FUNGSI EDIT PEMASUKAN ---
-    function openEditPemasukan(id) {
-        const p = db.pemasukan.find(item => item.id === id);
-        if (!p) return;
-        document.getElementById('edit-in-id').value = p.id;
-        document.getElementById('edit-in-event').value = p.eventId;
-        document.getElementById('edit-in-tanggal').value = p.tanggal;
-        document.getElementById('edit-in-ket').value = p.ket;
-        document.getElementById('edit-in-nominal').value = p.nominal;
-        document.getElementById('modal-edit-pemasukan').style.display = 'block';
-    }
-
-    document.getElementById('form-edit-pemasukan').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const id = document.getElementById('edit-in-id').value;
-        const payload = {
-            event_id: document.getElementById('edit-in-event').value,
-            tanggal: document.getElementById('edit-in-tanggal').value,
-            ket: document.getElementById('edit-in-ket').value,
-            nominal: Number(document.getElementById('edit-in-nominal').value)
-        };
-        const { error } = await supabaseClient.from('pemasukan').update(payload).eq('id', id);
-        if (!error) {
-            closeEditModal('modal-edit-pemasukan');
-            fetchAllData();
-        } else alert("Gagal update pemasukan: " + error.message);
-    });
-
-    // --- FUNGSI EDIT PENGELUARAN ---
-    function openEditPengeluaran(id) {
-        const p = db.pengeluaran.find(item => item.id === id);
-        if (!p) return;
-        document.getElementById('edit-out-id').value = p.id;
-        document.getElementById('edit-out-event').value = p.eventId;
-        document.getElementById('edit-out-tanggal').value = p.tanggal;
-        document.getElementById('edit-out-kategori').value = p.kategori;
-        document.getElementById('edit-out-vendor').value = p.vendor;
-        document.getElementById('edit-out-nominal').value = p.nominal;
-        document.getElementById('modal-edit-pengeluaran').style.display = 'block';
-    }
-
-    document.getElementById('form-edit-pengeluaran').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const id = document.getElementById('edit-out-id').value;
-        const payload = {
-            event_id: document.getElementById('edit-out-event').value,
-            tanggal: document.getElementById('edit-out-tanggal').value,
-            kategori: document.getElementById('edit-out-kategori').value,
-            vendor: document.getElementById('edit-out-vendor').value,
-            nominal: Number(document.getElementById('edit-out-nominal').value)
-        };
-        const { error } = await supabaseClient.from('pengeluaran').update(payload).eq('id', id);
-        if (!error) {
-            closeEditModal('modal-edit-pengeluaran');
-            fetchAllData();
-        } else alert("Gagal update pengeluaran: " + error.message);
-    });
-
-    function closeEditModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
-    // --- FORM INPUT TAMBAH DATA ---
+    // --- FORM LAINNYA (Event, Pemasukan, Pengeluaran) ---
     document.getElementById('form-event').addEventListener('submit', async function(e) {
         e.preventDefault();
         const newId = `EVT-${String(db.events.length + 1).padStart(3, '0')}`;
@@ -929,7 +896,7 @@
         if (!error) {
             document.getElementById('form-event').reset();
             fetchAllData();
-        } else alert("Gagal menyimpan event: " + error.message);
+        } else alert("Gagal: " + error.message);
     });
 
     async function deleteEvent(id) {
@@ -951,11 +918,11 @@
         if (!error) {
             document.getElementById('form-pemasukan').reset();
             fetchAllData();
-        } else alert("Gagal menyimpan pemasukan: " + error.message);
+        } else alert("Gagal: " + error.message);
     });
 
     async function deletePemasukan(id) {
-        if (confirm("Hapus catatan pemasukan ini?")) {
+        if (confirm("Hapus pemasukan ini?")) {
             await supabaseClient.from('pemasukan').delete().eq('id', id);
             fetchAllData();
         }
@@ -974,11 +941,11 @@
         if (!error) {
             document.getElementById('form-pengeluaran').reset();
             fetchAllData();
-        } else alert("Gagal menyimpan pengeluaran: " + error.message);
+        } else alert("Gagal: " + error.message);
     });
 
     async function deletePengeluaran(id) {
-        if (confirm("Hapus catatan pengeluaran ini?")) {
+        if (confirm("Hapus pengeluaran ini?")) {
             await supabaseClient.from('pengeluaran').delete().eq('id', id);
             fetchAllData();
         }
@@ -990,6 +957,6 @@
       .subscribe();
 
     fetchAllData();
-</script>
+ </script>
 </body>
 </html>
