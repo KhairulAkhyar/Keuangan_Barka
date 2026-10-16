@@ -644,6 +644,41 @@
         </form>
     </div>
 </div>
+    <!-- Tabel Riwayat Biaya Tambahan -->
+        <div class="card" style="margin-top: 20px;">
+            <h3>Daftar Riwayat Biaya Ekstra / Tambahan</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Keterangan</th>
+                        <th>Nominal</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tb-extra-items"></tbody>
+            </table>
+        </div>
+
+        <!-- Modal Edit Biaya Ekstra -->
+        <div id="modal-edit-extra" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
+            <div style="background:#fff; margin:10% auto; padding:20px; width:400px; border-radius:8px;">
+                <h3>Edit Biaya Tambahan</h3>
+                <form id="form-edit-extra">
+                    <input type="hidden" id="edit-ext-id">
+                    <label>Pilih Event:</label><br>
+                    <select id="edit-ext-event" required style="width:100%; margin-bottom:10px;"></select><br>
+                    <label>Keterangan:</label><br>
+                    <input type="text" id="edit-ext-ket" required style="width:100%; margin-bottom:10px;"><br>
+                    <label>Nominal (Rp):</label><br>
+                    <input type="number" id="edit-ext-nominal" required style="width:100%; margin-bottom:15px;"><br>
+                    <button type="submit" class="btn" style="background:#28a745; color:#fff;">Simpan Perubahan</button>
+                    <button type="button" class="btn btn-cancel" onclick="closeEditModal('modal-edit-extra')">Batal</button>
+                </form>
+            </div>
+        </div>
+
+    </div> <!-- Penutup container/tab -->
  <script>
     // CONFIG SUPABASE (Ganti dengan URL & Key milikmu dari Supabase)
     const SUPABASE_URL = "https://mfibulemkkbjchhccucj.supabase.co";
@@ -955,7 +990,47 @@
     supabaseClient.channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, () => fetchAllData())
       .subscribe();
+// --- TARUH DIDEKAT FUNGSI HAPUS LAINNYA DI DALAM TAG <script> ---
 
+    function openEditExtra(id) {
+        const item = db.extraItems.find(i => i.id === id);
+        if (!item) return;
+        document.getElementById('edit-ext-id').value = item.id;
+        document.getElementById('edit-ext-event').value = item.eventId;
+        document.getElementById('edit-ext-ket').value = item.keterangan;
+        document.getElementById('edit-ext-nominal').value = item.nominal;
+        document.getElementById('modal-edit-extra').style.display = 'block';
+    }
+
+    document.getElementById('form-edit-extra').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-ext-id').value;
+        const payload = {
+            event_id: document.getElementById('edit-ext-event').value,
+            keterangan: document.getElementById('edit-ext-ket').value,
+            nominal: Number(document.getElementById('edit-ext-nominal').value)
+        };
+        const { error } = await supabaseClient.from('invoice_items').update(payload).eq('id', id);
+        if (!error) {
+            closeEditModal('modal-edit-extra');
+            fetchAllData();
+        } else {
+            alert("Gagal update biaya tambahan: " + error.message);
+        }
+    });
+
+    async function deleteExtraItem(id) {
+        if (confirm("Hapus biaya tambahan ini?")) {
+            const { error } = await supabaseClient.from('invoice_items').delete().eq('id', id);
+            if (!error) {
+                fetchAllData();
+            } else {
+                alert("Gagal menghapus: " + error.message);
+            }
+        }
+    }
+
+    // Pemanggilan paling bawah
     fetchAllData();
  </script>
 </body>
